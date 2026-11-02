@@ -24,8 +24,9 @@ const GIF_URLS = [
   'https://motionsites.ai/assets/hero-celestia-preview-0yO3jXO8.gif',
 ];
 
-const ROW_1_IMAGES = [...GIF_URLS.slice(0, 11), ...GIF_URLS.slice(0, 11), ...GIF_URLS.slice(0, 11)];
-const ROW_2_IMAGES = [...GIF_URLS.slice(11), ...GIF_URLS.slice(11), ...GIF_URLS.slice(11)];
+// Two copies are enough for the moving rows; a third copy only adds network and DOM work.
+const ROW_1_IMAGES = [...GIF_URLS.slice(0, 11), ...GIF_URLS.slice(0, 11)];
+const ROW_2_IMAGES = [...GIF_URLS.slice(11), ...GIF_URLS.slice(11)];
 
 const FALLBACK_STYLES = [
   'from-violet-950 via-indigo-900 to-slate-950',
@@ -40,6 +41,37 @@ export const MarqueeSection: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
+
+  // Load each large third-party GIF only shortly before its card enters the viewport.
+  useEffect(() => {
+    const images = sectionRef.current?.querySelectorAll<HTMLImageElement>('img[data-src]');
+    if (!images?.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      images.forEach((img) => {
+        img.src = img.dataset.src || '';
+        img.removeAttribute('data-src');
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const img = entry.target as HTMLImageElement;
+          const source = img.dataset.src;
+          if (source) img.src = source;
+          img.removeAttribute('data-src');
+          observer.unobserve(img);
+        });
+      },
+      { rootMargin: '500px 500px', threshold: 0.01 }
+    );
+
+    images.forEach((img) => observer.observe(img));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -89,9 +121,8 @@ export const MarqueeSection: React.FC = () => {
         </div>
       </div>
       <img
-        src={url}
+        data-src={url}
         alt={`${label} ${(index % 11) + 1}`}
-        loading={index < 4 ? 'eager' : 'lazy'}
         decoding="async"
         onError={(event) => {
           // Keep the designed gradient card visible if the third-party GIF is unavailable.
