@@ -27,6 +27,15 @@ const GIF_URLS = [
 const ROW_1_IMAGES = [...GIF_URLS.slice(0, 11), ...GIF_URLS.slice(0, 11), ...GIF_URLS.slice(0, 11)];
 const ROW_2_IMAGES = [...GIF_URLS.slice(11), ...GIF_URLS.slice(11), ...GIF_URLS.slice(11)];
 
+const FALLBACK_STYLES = [
+  'from-violet-950 via-indigo-900 to-slate-950',
+  'from-cyan-950 via-blue-900 to-slate-950',
+  'from-fuchsia-950 via-purple-900 to-slate-950',
+  'from-sky-950 via-indigo-900 to-slate-950',
+  'from-emerald-950 via-teal-900 to-slate-950',
+  'from-rose-950 via-orange-900 to-slate-950',
+];
+
 export const MarqueeSection: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const row1Ref = useRef<HTMLDivElement>(null);
@@ -67,54 +76,55 @@ export const MarqueeSection: React.FC = () => {
     };
   }, []);
 
+  const renderCard = (url: string, index: number, label: string) => (
+    <div
+      key={`${label}-${index}`}
+      className={`relative w-[min(82vw,420px)] h-[220px] sm:h-[270px] shrink-0 rounded-2xl overflow-hidden bg-gradient-to-br ${FALLBACK_STYLES[index % FALLBACK_STYLES.length]} shadow-lg ring-1 ring-white/10`}
+    >
+      <div className="absolute inset-0 flex flex-col justify-between p-5 sm:p-6">
+        <span className="text-xs tracking-[0.28em] uppercase text-white/60">Yash Saxena · Visual Lab</span>
+        <div>
+          <p className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">3D / DIGITAL</p>
+          <p className="mt-2 text-sm text-white/65">Interactive visual experience</p>
+        </div>
+      </div>
+      <img
+        src={url}
+        alt={`${label} ${(index % 11) + 1}`}
+        loading={index < 4 ? 'eager' : 'lazy'}
+        decoding="async"
+        onError={(event) => {
+          // Keep the designed gradient card visible if the third-party GIF is unavailable.
+          event.currentTarget.style.display = 'none';
+        }}
+        className="relative z-10 w-full h-full object-cover rounded-2xl hover:scale-105 transition-transform duration-500 ease-out"
+      />
+    </div>
+  );
+
   return (
     <section
       ref={sectionRef}
-      className="relative bg-[#0C0C0C] pt-24 sm:pt-32 md:pt-40 pb-10 overflow-hidden w-full select-none"
+      aria-label="3D work and visual projects"
+      className="relative bg-[#0C0C0C] pt-20 sm:pt-24 md:pt-28 pb-12 overflow-hidden w-full select-none"
     >
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 mb-8 sm:mb-10">
+        <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-white/45 mb-3">Selected visuals</p>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white">
+          3D Work<span className="text-white/35"> & Experiments</span>
+        </h2>
+        <p className="mt-3 max-w-xl text-sm sm:text-base text-white/55">
+          A collection of digital worlds, motion studies and creative web visuals.
+        </p>
+      </div>
+
       <div className="flex flex-col gap-3 w-full">
-        {/* Row 1 - Moves RIGHT on scroll */}
-        <div
-          ref={row1Ref}
-          className="flex gap-3 w-max"
-          style={{ willChange: 'transform' }}
-        >
-          {ROW_1_IMAGES.map((url, i) => (
-            <div
-              key={`r1-${i}`}
-              className="w-[420px] h-[270px] shrink-0 rounded-2xl overflow-hidden bg-[#181818] shadow-lg"
-            >
-              <img
-                src={url}
-                alt={`3D Work ${(i % 11) + 1}`}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover rounded-2xl hover:scale-105 transition-transform duration-500 ease-out"
-              />
-            </div>
-          ))}
+        <div ref={row1Ref} className="flex gap-3 w-max" style={{ willChange: 'transform' }}>
+          {ROW_1_IMAGES.map((url, i) => renderCard(url, i, '3D Work'))}
         </div>
 
-        {/* Row 2 - Moves LEFT on scroll */}
-        <div
-          ref={row2Ref}
-          className="flex gap-3 w-max"
-          style={{ willChange: 'transform' }}
-        >
-          {ROW_2_IMAGES.map((url, i) => (
-            <div
-              key={`r2-${i}`}
-              className="w-[420px] h-[270px] shrink-0 rounded-2xl overflow-hidden bg-[#181818] shadow-lg"
-            >
-              <img
-                src={url}
-                alt={`3D Project ${(i % 10) + 1}`}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover rounded-2xl hover:scale-105 transition-transform duration-500 ease-out"
-              />
-            </div>
-          ))}
+        <div ref={row2Ref} className="flex gap-3 w-max" style={{ willChange: 'transform' }}>
+          {ROW_2_IMAGES.map((url, i) => renderCard(url, i + 11, '3D Project'))}
         </div>
       </div>
     </section>
